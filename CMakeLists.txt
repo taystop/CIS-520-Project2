@@ -20,10 +20,10 @@ include_directories(include)
 add_library(dyn_array STATIC src/dyn_array.c)
 
 # Compile the analysis executable.
-add_executable(${PROJECT_NAME}_analysis src/analysis.c)
+add_executable(analysis src/analysis.c)
 
 # link the dyn_array library we compiled against our analysis executable.
-target_link_libraries(${PROJECT_NAME}_analysis PRIVATE dyn_array)
+target_link_libraries(analysis PRIVATE dyn_array)
 
 # Compile the the tester executable.
 add_executable(${PROJECT_NAME}_test test/tests.cpp)
