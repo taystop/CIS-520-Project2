@@ -21,38 +21,40 @@ int main(int argc, char **argv)
 
     //abort();  // replace me with implementation.
 
-    float Average_Waiting_Time
-    float Average_Turnaround_Time
-    unsigned long Total_Clock_Time
-    dyn_array_t * queue
-    ScheduleResult_t results
+    //Create references for functions to allocate to.
+    dyn_array_t * queue;
+    ScheduleResult_t results;
 
+    //Load PCBS into a dynamic array
     queue = load_process_control_blocks(argv[0]);
 
+    //Check if loading went through
     if(queue == NULL){
 	printf("Error Loading PCBS\n");
 	return EXIT_FAILURE;
-    switch(argv[1]){
-	case "FCFS":
-		first_come_first_serve(queue,results);
-		break;
-	case "SJF":
-		shortest_job_first(queue,results);
-		break;
-	case "RR":
-		round_robin(queue,results,argv[2]);
-		break;
-	case "SRTF":
-		shortest_remaining_time_first(queue,results);
-		break;
-	default:
-		return EXIT_FAILURE;
-		break;
     }
 
-    printf("Average Waiting Time: %d \n", results.average_waiting_time);
-    printf("Average Turnaround Time: %d \n", results.average_turnaround_time);
-    printf("Total Clock Time: %d \n", results.total_run_time);
+    if(strcmp(argv[1],"FCFS") == 0){
+		first_come_first_serve(queue,&results);
+    }
+    else if(strcmp(argv[1],"SJF") == 0){
+		shortest_job_first(queue,&results);
+    }
+    else if(strcmp(argv[1],"RR") == 0){
+		double quantum;
+		sscanf(argv[2],"%lf",&quantum);
+		round_robin(queue,&results,quantum);
+    }
+    else if(strcmp(argv[1],"SRTF") == 0){
+		shortest_remaining_time_first(queue,&results);
+    }
+    else{
+		return EXIT_FAILURE;
+    }
+
+    printf("Average Waiting Time: %f \n", results.average_waiting_time);
+    printf("Average Turnaround Time: %f \n", results.average_turnaround_time);
+    printf("Total Clock Time: %ld \n", results.total_run_time);
 
     return EXIT_SUCCESS;
 }
