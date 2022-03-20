@@ -87,6 +87,7 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
 
 	dyn_array_push_back(queue,&temp);
     }
+    fclose(fp);
     return queue;
 }
 
