@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	printf("Error Loading PCBS\n");
 	return EXIT_FAILURE;
     }
-
+    //Compare algorithm request and execute algorithm if found
     if(strcmp(argv[1],"FCFS") == 0){
 		first_come_first_serve(queue,&results);
     }
@@ -52,6 +52,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
     }
 
+    //Print results to stdout
     printf("Average Waiting Time: %f \n", results.average_waiting_time);
     printf("Average Turnaround Time: %f \n", results.average_turnaround_time);
     printf("Total Clock Time: %ld \n", results.total_run_time);

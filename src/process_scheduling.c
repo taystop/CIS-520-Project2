@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "dyn_array.h"
 #include "processing_scheduling.h"
@@ -27,8 +28,45 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t p[size];
+    int wt[size];
+    int totalwait = 0;
+    int totalburst = 0;
+    clock_t clockstart = clock();
+    for(int i = 0; i < size; i++){
+	dyn_array_extract_front(ready_queue,&p[i]);
+    }
+    
+    for(int i = 0; i < size; i++){
+	int pos = i;
+ 	for(int j = i + 1; j < size; j++){
+		if(p[j].remaining_burst_time < p[pos].remaining_burst_time)
+			pos = j;
+	}
+	
+	ProcessControlBlock_t temp = p[i];
+	p[i] = p[pos];
+	p[pos] = temp;
+    }
+
+    wt[0] = 0;
+    
+    for(int i = 1; i < size; i++){
+	wt[i] = 0;
+	for(int j = 0; j < i; j++){
+		wt[i] += p[i].remaining_burst_time;
+	}
+    }
+
+    for(int i = 0; i < size; i++){
+	totalwait += wt[i];
+	totalburst += (int)p[i].remaining_burst_time;
+    }
+
+    result->average_turnaround_time = (float)((totalburst + totalwait) / size);
+    result->average_waiting_time = (float)(totalwait / size);
+    result->total_run_time = (unsigned long)((clock() - clockstart) / CLOCKS_PER_SEC);
     return false;   
 }
 
