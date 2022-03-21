@@ -22,9 +22,64 @@ void virtual_cpu(ProcessControlBlock_t *process_control_block)
 
 bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
-    return false;
+    //Initial null checks
+    if(ready_queue == NULL)
+    {
+    	return false;
+    }
+    if(result == NULL){
+    	return false;
+    }
+    //parameters for calculations specified prior to any analytical opperations
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t p[size];
+    int wt[size];
+    int totalwait = 0;
+    int totalburst = 0;
+    //Clock timer started for total run time update
+    clock_t clockstart = clock();
+    //Each PCB is pulled from the queue to an array of each pcb object
+    for(int i = 0; i < size; i++)
+    {
+    dyn_array_extract_front(ready_queue,&p[i]);
+    }
+
+    //sort pcbs by arrival time
+    for(int i = 0; i < size; i++){
+        int pos = i;
+        for(int j = i + 1; j < size; j++){
+                if(p[j].remaining_burst_time < p[pos].remaining_burst_time)
+                        pos = j;
+        }
+
+        ProcessControlBlock_t temp = p[i];
+        p[i] = p[pos];
+        p[pos] = temp;
+    }
+	
+    //The initial wait time will always be zero since the first object is processed first no matter what
+    wt[0] = 0;
+    //Nested for loop used to attain each process prior to the current one we are soluting the wait time for
+    for (int i=1; i < size; i++)
+    	{
+    	for(int j = 0; j < i; j++)
+    		{
+    		wt[i] += p[j].remaining_burst_time;
+    	}
+    }
+    //The total wait time and total burst time are computed
+    for(int v = 0; v < size; v++)
+    {
+    	totalwait += wt[v];
+      	totalburst += (int)p[v].remaining_burst_time;
+    }
+    //global variables are updated by local computations
+    result->average_turnaround_time = (float)((totalburst + totalwait) / size);
+    result->average_waiting_time = (float)(totalwait / size);
+    result->total_run_time = (unsigned long)((clock() - clockstart) / CLOCKS_PER_SEC);
+    //UNUSED(ready_queue);
+    //UNUSED(result);
+    return true;
 }
 
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
@@ -35,7 +90,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     int wt[size];
     int totalwait = 0;
     int totalburst = 0;
-    //get initial clock time
+    
     clock_t clockstart = clock();
     //read pcb's into an array
     for(int i = 0; i < size; i++){
@@ -152,40 +207,50 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     FILE * fp = fopen(input_file,"rb");
     uint32_t count;
     
+	//printf("Opening File Pointer\n");
     if(fp == NULL){
 	return NULL;
     }
+	//printf("Opened File\n");
 
     fread(buffer,sizeof(buffer),1,fp);
  
     memcpy(&count,buffer,4);
-    
+
+    printf("Number of PCBs = %u\n", count);
     queue = dyn_array_create(count,sizeof(buffer),NULL);
 
     if(queue == NULL)
 	return NULL;
+    //printf("Queue created\n");
 
-    for(uint32_t i = 0; i < count; i = i + 3){
+    for(uint32_t i = 0; i < count; i++){
 	uint32_t burst;
 	uint32_t priority;
   	uint32_t arrival;
 
-	ProcessControlBlock_t * temp = malloc(sizeof(ProcessControlBlock_t));
+	ProcessControlBlock_t * temp = malloc(sizeof(uint32_t)*3+sizeof(bool));
 	fread(buffer,sizeof(buffer),1,fp);
 	memcpy(&burst,buffer,4);
+	//printf("Burst for %i: %u\n",i,burst);
 	fread(buffer,sizeof(buffer),1,fp);
 	memcpy(&priority,buffer,4);
+	//printf("Priority for %i: %u\n",i,priority);
 	fread(buffer,sizeof(buffer),1,fp);
 	memcpy(&arrival,buffer,4);
+	//printf("Arrival for %i: %u\n",i,arrival);
 
 	temp->remaining_burst_time = burst;
 	temp->priority = priority;
 	temp->arrival = arrival;
 	temp->started = false;
 
+	//printf("Pushing onto queue\n");
 	dyn_array_push_back(queue,&temp);
     }
+    //printf("Copy Finished\n");
     fclose(fp);
+    printf("Closed File\n");
     return queue;
 }
 
