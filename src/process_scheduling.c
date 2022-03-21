@@ -261,7 +261,7 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     int size = dyn_array_size(ready_queue);
     ProcessControlBlock_t p[size];
     int nopr = size;
-    int mint = INT_MAX;
+    int mint = 10000000;
     uint32_t bt[size];
 
     //Record start time
@@ -298,7 +298,7 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
 	//create new shortest minimum time remaining and check if it's done
 	mint = bt[shortest];
 	if(mint == 0)
-		mint = INT_MAX;
+		mint = 10000000;
 
 	//check if process is finished
 	if(bt[shortest] == 0){
