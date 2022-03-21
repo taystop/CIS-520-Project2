@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <limits.h>
 
 #include "dyn_array.h"
 #include "processing_scheduling.h"
@@ -190,7 +191,67 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
 
 bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
-    return false;
+    //Allocate resources
+    int wt = 0, tat = 0, counter = 0, shortest;
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t p[size];
+    int nopr = size;
+    int mint = INT_MAX;
+    uint32_t bt[size];
+
+    //Record start time
+    clock_t clockstart = clock();
+
+    //Extract PCBs
+    for(int i = 0; i < size; i++){
+	dyn_array_extract_front(ready_queue,&p[i]);
+	bt[i] = p[i].remaining_burst_time;
+    }
+ 
+    //main loop
+    while(nopr != 0){
+	bool check = false;
+	
+	//Run through all processes to find shortest available one
+	for(int i = 0; i < nopr; i++){
+		if((int)p[i].arrival <= counter && (int)bt[i] < mint && bt[i] > 0){
+			mint = bt[i];
+			shortest = i;
+			check = true;
+		}
+	}
+	
+	//If no processes found increment time passed and restart
+	if(!check){
+		counter++;
+		continue;
+	}
+
+	//Decrement process time left
+	bt[shortest]--;
+	
+	//create new shortest minimum time remaining and check if it's done
+	mint = bt[shortest];
+	if(mint == 0)
+		mint = INT_MAX;
+
+	//check if process is finished
+	if(bt[shortest] == 0){
+		nopr--;
+		check = false;
+
+		wt = wt + counter - p[shortest].arrival - p[shortest].remaining_burst_time;
+		tat = tat + counter - p[shortest].arrival;
+	}
+
+	//Increment time
+	counter++;
+    }
+
+    //copies results to result pointer and returns success
+    result->average_waiting_time = (float)(wt *1.0/size);
+    result->average_turnaround_time = (float)(tat * 1.0 / size);
+    result->total_run_time = (unsigned long)((clock() - clockstart) / CLOCKS_PER_SEC);
+    
+    return true;
 }
