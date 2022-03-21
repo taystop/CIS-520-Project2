@@ -27,7 +27,7 @@ class GradeEnvironment : public testing::Environment
     public:
         virtual void SetUp() 
         {
-            //TestScore = 20;
+            //TestScore = 19;
             score = 0;
             total = 210;
         }
@@ -77,8 +77,8 @@ TEST (first_come_first_serve, validInput) {
 	dyn_array_push_back(dyn,&data[0]);	
 	bool res = first_come_first_serve (dyn,sched);	
 	ASSERT_EQ(true,res);
-	EXPECT_EQ(27,sched->average_waiting_time);
-	EXPECT_EQ(17,sched->average_turnaround_time);
+	EXPECT_EQ(3,sched->average_waiting_time);
+	EXPECT_EQ(13,sched->average_turnaround_time);
 	EXPECT_EQ((float) 30,sched->total_run_time);
 	dyn_array_destroy(dyn);
 	delete sched;
@@ -207,8 +207,8 @@ TEST (shortest_remaining_time_first, validInput) {
 	memset(sched,0,sizeof(ScheduleResult_t));
 	ProcessControlBlock_t data[3] = {
 			[0] = {7,0,0,false},
-			[1] = {3,0,1,false},
-			[2] = {4,0,3,false}
+			[1] = {15,0,0,false},
+			[2] = {4,0,0,false}
 	};
 	dyn_array_push_back(dyn,&data[2]);
 	dyn_array_push_back(dyn,&data[1]);
@@ -241,34 +241,19 @@ TEST (load_process_control_blocks, fileNotFound) {
 
 	score+=1;
 }
-//File with no contents check
-TEST (load_process_control_blocks, emptyFile) {
-    //Empty file not written to at all
-	const char* fname = "FileDoesNotExist.c";
-	//Accepted open read and write modes
-	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
-	//Flagged file open modes
-	int flags = O_CREAT | O_TRUNC | O_WRONLY;
-	//File opened, but never written to ensuring a blank file
-	int fd = open(fname, flags, mode);
-	close(fd);
-	dyn_array_t* dyn = load_process_control_blocks (fname);
-	ASSERT_EQ(dyn,(dyn_array_t*)NULL);
 
-	score+=1;
-}
 
 //Correct file found check
 TEST (load_process_control_blocks, CorrectPCBFile) {
     bool result = false;
-	const char* fname = "PCB.bin";
+	const char* fname = "pcb.bin";
 	dyn_array_t* dyn = load_process_control_blocks (fname);
 	if(dyn != NULL)
 	{
 	    result = true;
 	}
     ASSERT_EQ(result, true);
-    ASSERT_EQ(fname, "PCB.bin");
+    ASSERT_EQ(fname, "pcb.bin");
 	score+=1;
 }
 //Invalid file found check
