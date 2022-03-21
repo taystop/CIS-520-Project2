@@ -257,30 +257,32 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
 bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     //Allocate resources
-    int wt = 0, tat = 0, counter = 0, shortest;
+    int wt = 0, tat = 0, shortest = 0;
     int size = dyn_array_size(ready_queue);
     ProcessControlBlock_t p[size];
     int nopr = size;
-    int mint = 10000000;
     uint32_t bt[size];
 
-    //Record start time
-    clock_t clockstart = clock();
+    //set clock 0
+    uint32_t clock = 0;
 
     //Extract PCBs
     for(int i = 0; i < size; i++){
 	dyn_array_extract_front(ready_queue,&p[i]);
 	bt[i] = p[i].remaining_burst_time;
     }
- 
+
+    bool check;
     //main loop
     while(nopr != 0){
-	bool check = false;
 	
+	if(clock == 0)
+		check = true;	
 	//Run through all processes to find shortest available one
-	for(int i = 0; i < nopr; i++){
-		if((int)p[i].arrival <= counter && (int)bt[i] < mint && bt[i] > 0){
-			mint = bt[i];
+	for(int i = 0; i < nopr - 2; i++){
+		printf("In the For\n");
+		if(p[i].arrival < clock && p[i].remaining_burst_time > 0){
+			printf("in the if\n");
 			shortest = i;
 			check = true;
 		}
@@ -288,35 +290,32 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
 	
 	//If no processes found increment time passed and restart
 	if(!check){
-		counter++;
+	//	printf("broken");
+		clock++;
 		continue;
 	}
 
 	//Decrement process time left
-	bt[shortest]--;
-	
-	//create new shortest minimum time remaining and check if it's done
-	mint = bt[shortest];
-	if(mint == 0)
-		mint = 10000000;
+	virtual_cpu(&p[shortest]);
+	clock++;
 
 	//check if process is finished
 	if(bt[shortest] == 0){
 		nopr--;
 		check = false;
 
-		wt = wt + counter - p[shortest].arrival - p[shortest].remaining_burst_time;
-		tat = tat + counter - p[shortest].arrival;
+		wt = wt + clock - p[shortest].arrival - p[shortest].remaining_burst_time;
+		tat = tat + clock - p[shortest].arrival;
 	}
 
 	//Increment time
-	counter++;
+	clock++;
     }
 
     //copies results to result pointer and returns success
     result->average_waiting_time = (float)(wt *1.0/size);
     result->average_turnaround_time = (float)(tat * 1.0 / size);
-    result->total_run_time = (unsigned long)((clock() - clockstart) / CLOCKS_PER_SEC);
+    result->total_run_time = (unsigned long)clock;
     
     return true;
 }
